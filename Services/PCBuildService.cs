@@ -31,6 +31,17 @@ namespace PCBuildAssistant.Services
                     _logger.LogError("AI service returned HTML instead of JSON. Response: {Response}", aiResponse);
                     throw new InvalidOperationException("The AI service returned an error page instead of a JSON response. This usually indicates an authentication or configuration issue.");
                 }
+
+                // Log the raw AI response for debugging
+                _logger.LogInformation("Raw AI response first 500 chars: {Response}", 
+                    aiResponse.Length > 500 ? aiResponse.Substring(0, 500) + "..." : aiResponse);
+
+                // Clean up the AI response - remove markdown code blocks if present
+                var cleanedResponse = CleanAIResponse(aiResponse);
+                _logger.LogInformation("Cleaned AI response first 200 chars: {Response}", 
+                    cleanedResponse.Length > 200 ? cleanedResponse.Substring(0, 200) + "..." : cleanedResponse);
+                
+                aiResponse = cleanedResponse;
                 
                 // Parse the AI response JSON with custom options to handle flexible array/string fields
                 var jsonOptions = new JsonSerializerOptions
@@ -394,6 +405,46 @@ namespace PCBuildAssistant.Services
                 JsonValueKind.Object => element.EnumerateObject().ToDictionary(p => p.Name, p => GetJsonValue(p.Value)),
                 _ => element.GetRawText()
             };
+        }
+
+        private string CleanAIResponse(string aiResponse)
+        {
+            if (string.IsNullOrEmpty(aiResponse))
+                return aiResponse;
+
+            // Trim whitespace
+            aiResponse = aiResponse.Trim();
+
+            // Remove markdown code blocks if present
+            if (aiResponse.StartsWith("```json"))
+            {
+                // Remove opening ```json
+                aiResponse = aiResponse.Substring(7).Trim();
+                
+                // Remove closing ```
+                if (aiResponse.EndsWith("```"))
+                {
+                    aiResponse = aiResponse.Substring(0, aiResponse.Length - 3).Trim();
+                }
+            }
+            else if (aiResponse.StartsWith("```"))
+            {
+                // Remove opening ```
+                aiResponse = aiResponse.Substring(3).Trim();
+                
+                // Remove closing ```
+                if (aiResponse.EndsWith("```"))
+                {
+                    aiResponse = aiResponse.Substring(0, aiResponse.Length - 3).Trim();
+                }
+            }
+            else if (aiResponse.StartsWith("`") && aiResponse.EndsWith("`"))
+            {
+                // Remove single backticks
+                aiResponse = aiResponse.Substring(1, aiResponse.Length - 2).Trim();
+            }
+
+            return aiResponse;
         }
     }
 }
