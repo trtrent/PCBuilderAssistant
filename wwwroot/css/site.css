@@ -29,6 +29,30 @@ body {
     min-height: 100vh;
 }
 
+.page-full {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.top-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.top-header h1 {
+    color: white !important;
+}
+
+.main-content {
+    flex: 1;
+    padding: 2rem 0;
+}
+
 main {
     flex: 1;
 }
@@ -128,30 +152,30 @@ main {
     display: block;
 }
 
+/* Dropdown menu styling */
+.dropdown-menu {
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border: none;
+}
+
+.dropdown-item:hover {
+    background-color: #667eea;
+    color: white;
+}
+
+.nav-link {
+    color: rgba(255, 255, 255, 0.9) !important;
+    text-decoration: none;
+}
+
+.nav-link:hover {
+    color: white !important;
+}
+
 @media (min-width: 641px) {
-    .page {
-        flex-direction: row;
-    }
-
-    .sidebar {
-        width: 260px;
-        height: 100vh;
-        position: sticky;
-        top: 0;
-    }
-
-    .top-row {
-        position: sticky;
-        top: 0;
-        z-index: 1;
-    }
-
-    .nav-scrollable {
-        display: block;
-    }
-
-    .navbar-toggler {
-        display: none;
+    .page-full {
+        flex-direction: column;
     }
 }
 
@@ -161,6 +185,13 @@ main {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     margin: -1.5rem -1.5rem 2rem -1.5rem;
+}
+
+.hero-section-full {
+    padding: 4rem 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    margin: -2rem -15px 2rem -15px;
 }
 
 .hero-section .display-4 {
