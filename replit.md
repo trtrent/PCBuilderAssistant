@@ -90,6 +90,12 @@ PC Build Assistant is an AI-powered web application that provides personalized P
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+- June 26, 2025: Removed sidebar navigation and implemented full-width layout with top header
+- June 26, 2025: Fixed HTTP client base address configuration for Blazor Server API calls
+- June 26, 2025: Updated UI styling to use complete screen width and improved navigation with dropdown menu
+
 ## Changelog
 
 Changelog:

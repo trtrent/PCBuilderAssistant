@@ -18,6 +18,19 @@ builder.Services.AddScoped<IPCBuildService, PCBuildService>();
 // Add HttpClient for external API calls
 builder.Services.AddHttpClient();
 
+// Configure HttpClient for Blazor components with dynamic base address
+builder.Services.AddScoped(sp =>
+{
+    var httpContextAccessor = sp.GetService<IHttpContextAccessor>();
+    var baseAddress = httpContextAccessor?.HttpContext?.Request != null
+        ? $"{httpContextAccessor.HttpContext.Request.Scheme}://{httpContextAccessor.HttpContext.Request.Host}"
+        : "http://localhost:5000";
+    return new HttpClient { BaseAddress = new Uri(baseAddress) };
+});
+
+// Add HttpContextAccessor for dynamic base address
+builder.Services.AddHttpContextAccessor();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
