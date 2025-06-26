@@ -50,10 +50,10 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.MapControllers(); // Map API controllers first
 app.MapRazorPages();
 app.MapBlazorHub();
-app.MapFallbackToPage("/_Host");
-app.MapControllers();
+app.MapFallbackToPage("/_Host"); // Map fallback last
 
 // Bind to all interfaces for container compatibility
 app.Run("http://0.0.0.0:5000");
