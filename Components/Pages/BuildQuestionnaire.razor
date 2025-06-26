@@ -1,8 +1,11 @@
 @page "/questionnaire"
 @using System.ComponentModel.DataAnnotations
+@using PCBuildAssistant.Models
+@using PCBuildAssistant.Services
 @inject NavigationManager Navigation
 @inject HttpClient Http
 @inject IJSRuntime JSRuntime
+@inject IPCBuildService PCBuildService
 
 <PageTitle>PC Build Questionnaire</PageTitle>
 
@@ -314,38 +317,24 @@
                     .ToList();
             }
 
-            Console.WriteLine($"Making API request to: api/pcbuild/generate");
+            Console.WriteLine($"Generating build directly using service");
             Console.WriteLine($"Budget: {buildRequest.Preferences.Budget}, Purpose: {buildRequest.Preferences.Purpose}");
 
-            // Make API call to generate build
-            var response = await Http.PostAsJsonAsync("api/pcbuild/generate", buildRequest);
+            // Call the PC build service directly instead of making HTTP request
+            var buildResponse = await PCBuildService.GenerateBuildAsync(buildRequest);
             
-            Console.WriteLine($"Response status: {response.StatusCode}");
-            Console.WriteLine($"Response headers: {response.Headers}");
-            
-            if (response.IsSuccessStatusCode)
+            if (buildResponse != null)
             {
-                var responseContent = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"Response content preview: {responseContent.Substring(0, Math.Min(200, responseContent.Length))}");
+                Console.WriteLine($"Build generated successfully: {buildResponse.BuildName}");
                 
-                var buildResponse = await response.Content.ReadFromJsonAsync<PCBuildResponse>();
-                if (buildResponse != null)
-                {
-                    // Store the result and navigate to results page
-                    await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", 
-                        "currentBuild", System.Text.Json.JsonSerializer.Serialize(buildResponse));
-                    Navigation.NavigateTo("/results");
-                }
-                else
-                {
-                    errorMessage = "Failed to parse the build recommendation. Please try again.";
-                }
+                // Store the result and navigate to results page
+                await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", 
+                    "currentBuild", System.Text.Json.JsonSerializer.Serialize(buildResponse));
+                Navigation.NavigateTo("/results");
             }
             else
             {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"Error response: {errorContent}");
-                errorMessage = $"An error occurred: {errorContent}";
+                errorMessage = "Failed to generate build recommendation. Please try again.";
             }
         }
         catch (Exception ex)
