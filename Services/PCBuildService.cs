@@ -23,11 +23,26 @@ namespace PCBuildAssistant.Services
             {
                 var aiResponse = await _azureOpenAIService.GeneratePCBuildRecommendationAsync(request);
                 
-                // Parse the AI response JSON
-                var buildResponse = JsonSerializer.Deserialize<PCBuildResponse>(aiResponse, new JsonSerializerOptions
+                // Parse the AI response JSON with custom options to handle flexible array/string fields
+                var jsonOptions = new JsonSerializerOptions
                 {
-                    PropertyNameCaseInsensitive = true
-                });
+                    PropertyNameCaseInsensitive = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                };
+                
+                // First, try to deserialize as-is
+                PCBuildResponse? buildResponse = null;
+                try
+                {
+                    buildResponse = JsonSerializer.Deserialize<PCBuildResponse>(aiResponse, jsonOptions);
+                }
+                catch (JsonException ex)
+                {
+                    _logger.LogWarning(ex, "Failed to deserialize AI response directly, attempting to fix format");
+                    // If direct deserialization fails, try to fix common format issues
+                    var fixedResponse = FixAIResponseFormat(aiResponse);
+                    buildResponse = JsonSerializer.Deserialize<PCBuildResponse>(fixedResponse, jsonOptions);
+                }
 
                 if (buildResponse == null)
                 {
@@ -277,6 +292,99 @@ namespace PCBuildAssistant.Services
 </html>";
 
             return html;
+        }
+
+        private string FixAIResponseFormat(string aiResponse)
+        {
+            try
+            {
+                // Parse as JsonDocument to examine and fix the structure
+                using var doc = JsonDocument.Parse(aiResponse);
+                var root = doc.RootElement;
+                
+                // Create a new object with fixed array fields
+                var fixedObject = new Dictionary<string, object>();
+                
+                foreach (var property in root.EnumerateObject())
+                {
+                    var value = property.Value;
+                    var name = property.Name;
+                    
+                    if (name.Equals("components", StringComparison.OrdinalIgnoreCase) && value.ValueKind == JsonValueKind.Array)
+                    {
+                        var components = new List<object>();
+                        foreach (var component in value.EnumerateArray())
+                        {
+                            var componentObj = new Dictionary<string, object>();
+                            foreach (var compProp in component.EnumerateObject())
+                            {
+                                var compValue = compProp.Value;
+                                var compName = compProp.Name;
+                                
+                                // Fix array fields that might be strings
+                                if ((compName.Equals("keyFeatures", StringComparison.OrdinalIgnoreCase) ||
+                                     compName.Equals("compatibilityNotes", StringComparison.OrdinalIgnoreCase) ||
+                                     compName.Equals("recommendedRetailers", StringComparison.OrdinalIgnoreCase)) &&
+                                    compValue.ValueKind == JsonValueKind.String)
+                                {
+                                    var stringValue = compValue.GetString() ?? "";
+                                    // Convert comma-separated string to array
+                                    componentObj[compName] = stringValue.Split(',')
+                                        .Select(s => s.Trim())
+                                        .Where(s => !string.IsNullOrEmpty(s))
+                                        .ToArray();
+                                }
+                                else
+                                {
+                                    componentObj[compName] = GetJsonValue(compValue);
+                                }
+                            }
+                            components.Add(componentObj);
+                        }
+                        fixedObject[name] = components;
+                    }
+                    else if ((name.Equals("compatibilityWarnings", StringComparison.OrdinalIgnoreCase) ||
+                              name.Equals("assemblyTips", StringComparison.OrdinalIgnoreCase) ||
+                              name.Equals("requiredTools", StringComparison.OrdinalIgnoreCase) ||
+                              name.Equals("recommendedUpgrades", StringComparison.OrdinalIgnoreCase) ||
+                              name.Equals("localRetailers", StringComparison.OrdinalIgnoreCase)) &&
+                             value.ValueKind == JsonValueKind.String)
+                    {
+                        var stringValue = value.GetString() ?? "";
+                        // Convert comma-separated string to array
+                        fixedObject[name] = stringValue.Split(',')
+                            .Select(s => s.Trim())
+                            .Where(s => !string.IsNullOrEmpty(s))
+                            .ToArray();
+                    }
+                    else
+                    {
+                        fixedObject[name] = GetJsonValue(value);
+                    }
+                }
+                
+                return JsonSerializer.Serialize(fixedObject);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to fix AI response format");
+                throw new InvalidOperationException("The AI service returned an invalid response format that could not be fixed.", ex);
+            }
+        }
+        
+        private object GetJsonValue(JsonElement element)
+        {
+            return element.ValueKind switch
+            {
+                JsonValueKind.String => element.GetString() ?? "",
+                JsonValueKind.Number => element.TryGetDecimal(out var dec) ? dec : element.GetDouble(),
+                JsonValueKind.True => true,
+                JsonValueKind.False => false,
+                JsonValueKind.Null => null,
+                JsonValueKind.Array => element.EnumerateArray().Select(GetJsonValue).ToArray(),
+                JsonValueKind.Object => element.EnumerateObject().ToDictionary(p => p.Name, p => GetJsonValue(p.Value)),
+                _ => element.GetRawText()
+            };
         }
     }
 }

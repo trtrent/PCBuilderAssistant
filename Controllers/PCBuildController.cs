@@ -22,28 +22,37 @@ namespace PCBuildAssistant.Controllers
         {
             try
             {
+                _logger.LogInformation("Received PC build generation request");
+                
                 if (request?.Preferences == null)
                 {
-                    return BadRequest("Invalid request. User preferences are required.");
+                    _logger.LogWarning("Invalid request: User preferences are null");
+                    return BadRequest(new { error = "Invalid request. User preferences are required." });
                 }
 
                 if (request.Preferences.Budget <= 0)
                 {
-                    return BadRequest("Budget must be greater than zero.");
+                    _logger.LogWarning("Invalid request: Budget is {Budget}", request.Preferences.Budget);
+                    return BadRequest(new { error = "Budget must be greater than zero." });
                 }
 
+                _logger.LogInformation("Generating PC build for purpose: {Purpose}, budget: {Budget}", 
+                    request.Preferences.Purpose, request.Preferences.Budget);
+                
                 var result = await _pcBuildService.GenerateBuildAsync(request);
+                
+                _logger.LogInformation("Successfully generated PC build with ID: {BuildId}", result.BuildId);
                 return Ok(result);
             }
             catch (InvalidOperationException ex)
             {
                 _logger.LogError(ex, "Invalid operation while generating PC build");
-                return BadRequest(ex.Message);
+                return BadRequest(new { error = ex.Message });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error while generating PC build");
-                return StatusCode(500, "An unexpected error occurred while generating your PC build. Please try again later.");
+                return StatusCode(500, new { error = "An unexpected error occurred while generating your PC build. Please check the configuration and try again." });
             }
         }
 
