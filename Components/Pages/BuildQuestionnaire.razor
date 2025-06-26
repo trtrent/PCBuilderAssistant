@@ -314,11 +314,20 @@
                     .ToList();
             }
 
+            Console.WriteLine($"Making API request to: api/pcbuild/generate");
+            Console.WriteLine($"Budget: {buildRequest.Preferences.Budget}, Purpose: {buildRequest.Preferences.Purpose}");
+
             // Make API call to generate build
             var response = await Http.PostAsJsonAsync("api/pcbuild/generate", buildRequest);
             
+            Console.WriteLine($"Response status: {response.StatusCode}");
+            Console.WriteLine($"Response headers: {response.Headers}");
+            
             if (response.IsSuccessStatusCode)
             {
+                var responseContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Response content preview: {responseContent.Substring(0, Math.Min(200, responseContent.Length))}");
+                
                 var buildResponse = await response.Content.ReadFromJsonAsync<PCBuildResponse>();
                 if (buildResponse != null)
                 {
@@ -335,7 +344,8 @@
             else
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
-                errorMessage = $"Failed to generate build recommendation: {errorContent}";
+                Console.WriteLine($"Error response: {errorContent}");
+                errorMessage = $"An error occurred: {errorContent}";
             }
         }
         catch (Exception ex)
