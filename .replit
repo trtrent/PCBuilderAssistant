@@ -1,0 +1,30 @@
+modules = ["dotnet", "dotnet-8"]
+
+[nix]
+channel = "stable-24_05"
+packages = ["dotnet-sdk_8"]
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "PC Build Assistant Server"
+
+[[workflows.workflow]]
+name = "PC Build Assistant Server"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "dotnet restore && dotnet run"
+waitForPort = 5000
+
+[[ports]]
+localPort = 5000
+externalPort = 80

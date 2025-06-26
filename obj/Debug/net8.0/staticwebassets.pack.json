@@ -1,0 +1,29 @@
+{
+  "Files": [
+    {
+      "Id": "/home/runner/workspace/wwwroot/css/site.css",
+      "PackagePath": "staticwebassets/css/site.css"
+    },
+    {
+      "Id": "/home/runner/workspace/wwwroot/js/site.js",
+      "PackagePath": "staticwebassets/js/site.js"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.PCBuildAssistant.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.build.PCBuildAssistant.props",
+      "PackagePath": "build\\PCBuildAssistant.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.buildMultiTargeting.PCBuildAssistant.props",
+      "PackagePath": "buildMultiTargeting\\PCBuildAssistant.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.buildTransitive.PCBuildAssistant.props",
+      "PackagePath": "buildTransitive\\PCBuildAssistant.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

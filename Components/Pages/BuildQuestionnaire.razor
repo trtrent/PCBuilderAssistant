@@ -1,0 +1,355 @@
+@page "/questionnaire"
+@using System.ComponentModel.DataAnnotations
+@inject NavigationManager Navigation
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+
+<PageTitle>PC Build Questionnaire</PageTitle>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">
+                        <i class="fas fa-clipboard-list me-2"></i>
+                        PC Build Questionnaire
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <p class="lead mb-4">
+                        Tell us about your needs and preferences, and we'll generate a personalized PC build recommendation for you.
+                    </p>
+
+                    <EditForm Model="@buildRequest" OnValidSubmit="@HandleValidSubmit">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="alert alert-danger" />
+
+                        @* Basic Information *@
+                        <div class="mb-4">
+                            <h4 class="text-primary">Basic Information</h4>
+                            <hr>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Primary Purpose</label>
+                                    <select class="form-select" @bind="buildRequest.Preferences.Purpose">
+                                        <option value="">Select purpose...</option>
+                                        <option value="Gaming">Gaming</option>
+                                        <option value="Content Creation">Content Creation</option>
+                                        <option value="Programming">Programming/Development</option>
+                                        <option value="Video Editing">Video Editing</option>
+                                        <option value="3D Rendering">3D Rendering</option>
+                                        <option value="Office Work">Office Work</option>
+                                        <option value="General Use">General Use</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Experience Level</label>
+                                    <select class="form-select" @bind="buildRequest.Preferences.ExperienceLevel">
+                                        <option value="">Select level...</option>
+                                        <option value="Beginner">Beginner</option>
+                                        <option value="Intermediate">Intermediate</option>
+                                        <option value="Advanced">Advanced</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Budget and Location *@
+                        <div class="mb-4">
+                            <h4 class="text-primary">Budget & Location</h4>
+                            <hr>
+                            
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Budget</label>
+                                    <input type="number" class="form-control" @bind="buildRequest.Preferences.Budget" 
+                                           min="200" max="10000" step="50" placeholder="1000" />
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Currency</label>
+                                    <select class="form-select" @bind="buildRequest.Preferences.Currency">
+                                        <option value="USD">USD ($)</option>
+                                        <option value="EUR">EUR (€)</option>
+                                        <option value="GBP">GBP (£)</option>
+                                        <option value="CAD">CAD (C$)</option>
+                                        <option value="AUD">AUD (A$)</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Location (Country)</label>
+                                    <input type="text" class="form-control" @bind="buildRequest.Preferences.Location" 
+                                           placeholder="United States" />
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Style Preferences *@
+                        <div class="mb-4">
+                            <h4 class="text-primary">Style Preferences</h4>
+                            <hr>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Preferred Style</label>
+                                    <select class="form-select" @bind="buildRequest.Preferences.PreferredStyle">
+                                        <option value="">Select style...</option>
+                                        <option value="Minimalist">Minimalist</option>
+                                        <option value="RGB Gaming">RGB Gaming</option>
+                                        <option value="Professional">Professional</option>
+                                        <option value="Compact">Compact</option>
+                                        <option value="High-End">High-End</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Form Factor</label>
+                                    <select class="form-select" @bind="buildRequest.Preferences.FormFactor">
+                                        <option value="">Select form factor...</option>
+                                        <option value="ATX">ATX (Full Size)</option>
+                                        <option value="Micro-ATX">Micro-ATX (Compact)</option>
+                                        <option value="Mini-ITX">Mini-ITX (Small)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" @bind="buildRequest.Preferences.RgbLighting" id="rgbCheck">
+                                        <label class="form-check-label" for="rgbCheck">
+                                            RGB Lighting
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" @bind="buildRequest.Preferences.OverclockingInterest" id="overclockCheck">
+                                        <label class="form-check-label" for="overclockCheck">
+                                            Interested in Overclocking
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Display Setup *@
+                        <div class="mb-4">
+                            <h4 class="text-primary">Display Setup</h4>
+                            <hr>
+                            
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Number of Monitors</label>
+                                    <select class="form-select" @bind="buildRequest.Preferences.MonitorCount">
+                                        <option value="1">1 Monitor</option>
+                                        <option value="2">2 Monitors</option>
+                                        <option value="3">3 Monitors</option>
+                                        <option value="4">4+ Monitors</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Monitor Size</label>
+                                    <select class="form-select" @bind="buildRequest.Preferences.MonitorSize">
+                                        <option value="">Select size...</option>
+                                        <option value="24 inch">24"</option>
+                                        <option value="27 inch">27"</option>
+                                        <option value="32 inch">32"</option>
+                                        <option value="34 inch ultrawide">34" Ultrawide</option>
+                                        <option value="Larger than 34 inch">Larger than 34"</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Resolution</label>
+                                    <select class="form-select" @bind="buildRequest.Preferences.Resolution">
+                                        <option value="">Select resolution...</option>
+                                        <option value="1080p">1080p (Full HD)</option>
+                                        <option value="1440p">1440p (2K)</option>
+                                        <option value="4K">4K (Ultra HD)</option>
+                                        <option value="Ultrawide">Ultrawide</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Additional Preferences *@
+                        <div class="mb-4">
+                            <h4 class="text-primary">Additional Preferences</h4>
+                            <hr>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Connection Type</label>
+                                <select class="form-select" @bind="buildRequest.Preferences.ConnectionType">
+                                    <option value="">Select preference...</option>
+                                    <option value="Wired">Wired (Ethernet, USB)</option>
+                                    <option value="Wireless">Wireless (Wi-Fi, Bluetooth)</option>
+                                    <option value="Mixed">Mixed (Both)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Preferred Brands (Optional)</label>
+                                <input type="text" class="form-control" @bind="preferredBrandsText" 
+                                       placeholder="Intel, NVIDIA, Corsair, etc. (comma-separated)" />
+                                <div class="form-text">Leave blank for no brand preference</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Special Requirements (Optional)</label>
+                                <textarea class="form-control" rows="3" @bind="buildRequest.AdditionalNotes"
+                                          placeholder="Any specific requirements, constraints, or additional information..."></textarea>
+                            </div>
+                        </div>
+
+                        @* Options *@
+                        <div class="mb-4">
+                            <h4 class="text-primary">Build Options</h4>
+                            <hr>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" @bind="buildRequest.IncludePeripherals" id="peripheralsCheck">
+                                        <label class="form-check-label" for="peripheralsCheck">
+                                            Include Peripherals (Keyboard, Mouse, etc.)
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" @bind="buildRequest.IncludeAssemblyGuide" id="assemblyCheck">
+                                        <label class="form-check-label" for="assemblyCheck">
+                                            Include Assembly Guide
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg" disabled="@isGenerating">
+                                @if (isGenerating)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                    <span>Generating Your Build...</span>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-magic me-2"></i>
+                                    <span>Generate My PC Build</span>
+                                }
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div class="toast show" role="alert">
+            <div class="toast-header bg-danger text-white">
+                <strong class="me-auto">Error</strong>
+                <button type="button" class="btn-close btn-close-white" @onclick="ClearError"></button>
+            </div>
+            <div class="toast-body">
+                @errorMessage
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private PCBuildRequest buildRequest = new();
+    private string preferredBrandsText = string.Empty;
+    private bool isGenerating = false;
+    private string errorMessage = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        // Initialize with default values
+        buildRequest.Preferences.Currency = "USD";
+        buildRequest.Preferences.MonitorCount = 1;
+        buildRequest.IncludePeripherals = true;
+        buildRequest.IncludeAssemblyGuide = true;
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (buildRequest.Preferences.Budget <= 0)
+        {
+            errorMessage = "Please enter a valid budget amount.";
+            return;
+        }
+
+        if (string.IsNullOrEmpty(buildRequest.Preferences.Purpose))
+        {
+            errorMessage = "Please select the primary purpose for your PC.";
+            return;
+        }
+
+        isGenerating = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            // Parse preferred brands
+            if (!string.IsNullOrWhiteSpace(preferredBrandsText))
+            {
+                buildRequest.Preferences.PreferredBrands = preferredBrandsText
+                    .Split(',')
+                    .Select(b => b.Trim())
+                    .Where(b => !string.IsNullOrEmpty(b))
+                    .ToList();
+            }
+
+            // Make API call to generate build
+            var response = await Http.PostAsJsonAsync("api/pcbuild/generate", buildRequest);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var buildResponse = await response.Content.ReadFromJsonAsync<PCBuildResponse>();
+                if (buildResponse != null)
+                {
+                    // Store the result and navigate to results page
+                    await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", 
+                        "currentBuild", System.Text.Json.JsonSerializer.Serialize(buildResponse));
+                    Navigation.NavigateTo("/results");
+                }
+                else
+                {
+                    errorMessage = "Failed to parse the build recommendation. Please try again.";
+                }
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                errorMessage = $"Failed to generate build recommendation: {errorContent}";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred: {ex.Message}";
+        }
+        finally
+        {
+            isGenerating = false;
+        }
+    }
+
+    private void ClearError()
+    {
+        errorMessage = string.Empty;
+    }
+}
