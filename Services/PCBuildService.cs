@@ -23,6 +23,15 @@ namespace PCBuildAssistant.Services
             {
                 var aiResponse = await _azureOpenAIService.GeneratePCBuildRecommendationAsync(request);
                 
+                _logger.LogInformation("AI response received, attempting to parse JSON");
+                
+                // Check if response looks like HTML (indicating an error page)
+                if (aiResponse.TrimStart().StartsWith("<"))
+                {
+                    _logger.LogError("AI service returned HTML instead of JSON. Response: {Response}", aiResponse);
+                    throw new InvalidOperationException("The AI service returned an error page instead of a JSON response. This usually indicates an authentication or configuration issue.");
+                }
+                
                 // Parse the AI response JSON with custom options to handle flexible array/string fields
                 var jsonOptions = new JsonSerializerOptions
                 {

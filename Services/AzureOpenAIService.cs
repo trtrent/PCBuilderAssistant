@@ -34,6 +34,7 @@ namespace PCBuildAssistant.Services
         {
             try
             {
+                _logger.LogInformation("Making Azure OpenAI request with deployment: {DeploymentName}", _deploymentName);
                 var systemPrompt = @"You are an expert PC building assistant with extensive knowledge of current hardware and pricing. 
 Generate a detailed PC build recommendation based on the user's preferences. 
 
@@ -88,6 +89,17 @@ Additional Notes: {request.AdditionalNotes}";
                 var response = await _openAIClient.GetChatCompletionsAsync(chatCompletionsOptions);
                 var result = response.Value.Choices[0].Message.Content;
 
+                _logger.LogInformation("Azure OpenAI response received, length: {Length}", result?.Length ?? 0);
+                
+                if (string.IsNullOrEmpty(result))
+                {
+                    throw new InvalidOperationException("AI service returned empty response");
+                }
+                
+                // Log first 200 characters to help debug format issues
+                var preview = result.Length > 200 ? result.Substring(0, 200) + "..." : result;
+                _logger.LogInformation("Azure OpenAI response preview: {Preview}", preview);
+                
                 _logger.LogInformation("Successfully generated PC build recommendation");
                 return result;
             }

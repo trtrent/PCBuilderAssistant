@@ -56,6 +56,21 @@ namespace PCBuildAssistant.Controllers
             }
         }
 
+        [HttpGet("config-check")]
+        public IActionResult ConfigCheck()
+        {
+            var endpoint = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
+            var hasApiKey = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY"));
+            var deployment = Environment.GetEnvironmentVariable("AZURE_OPENAI_DEPLOYMENT");
+            
+            return Ok(new { 
+                hasEndpoint = !string.IsNullOrEmpty(endpoint),
+                endpointDomain = endpoint != null ? new Uri(endpoint).Host : "not set",
+                hasApiKey = hasApiKey,
+                deployment = deployment ?? "gpt-4 (default)"
+            });
+        }
+
         [HttpPost("download/pdf")]
         public async Task<IActionResult> DownloadBuildPdf([FromBody] PCBuildResponse buildResponse)
         {
